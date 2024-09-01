@@ -1,4 +1,4 @@
-import { Controller, Get, Header, Param, Res } from '@nestjs/common';
+import { Controller, Get, Param, Res } from '@nestjs/common';
 import { BotService } from './bot.service';
 import type { Response } from 'express'; // Assuming that we are using the ExpressJS HTTP Adapter
 
