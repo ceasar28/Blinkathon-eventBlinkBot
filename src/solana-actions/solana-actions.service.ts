@@ -87,7 +87,7 @@ export class SolanaActionService {
         links: {
           actions: [
             {
-              href: `${baseURL}/solana-action?depatureCity={depatureCity}`,
+              href: `${baseURL}/solana-action?depatureCity={depatureCity}&stage=1`,
               label: `Next`, // button text
               parameters: [
                 {
@@ -133,13 +133,14 @@ export class SolanaActionService {
         type: 'action',
         icon: 'https://i.ibb.co/qDFWWq3/wings-high-resolution-logo.png',
         title: 'Wings',
-        description: 'Please fill yourr destination city.',
+        description:
+          'Please Select your depature city airport and then fill in  your destination city.',
         label: `Destination City`,
         disabled: false,
         links: {
           actions: [
             {
-              href: `${baseURL}/solana-action?depatureCity={depatureCity}&stage='depatureCity'`,
+              href: `${baseURL}/solana-action?depatureCity=${departureCity}&sessionId=${sessionId}&userAccount=${userAccount}&airportCode={cityCode}&destinationCity={destinationCity}&stage=2`,
               label: `Next`, // button text
               parameters: [
                 {
@@ -149,8 +150,8 @@ export class SolanaActionService {
                   options: [...formattedCityCode],
                 },
                 {
-                  name: 'destination city', // name template literal
-                  label: 'Destination city (e.g london)', // placeholder for the input
+                  label: 'Destination city (e.g london)',
+                  name: 'destinationCity', // name template literal
                 },
               ],
             },
@@ -199,21 +200,9 @@ export class SolanaActionService {
         await connection.getLatestBlockhash()
       ).blockhash;
 
-      //   if (stage === 'depatureCity') {
-      //     return await createPostResponse({
-      //       fields: {
-      //         transaction,
-      //         icon: '',
-      //         links: {
-      //           next: {
-      //             type: 'post',
-      //             href: `${baseURL}/solana-action?stage`,
-      //             parameters: [],
-      //           },
-      //         },
-      //       },
-      //     });
-      //   }
+      if (data.stage === '2') {
+        console.log(`stage 2 data :`, data);
+      }
 
       const userExist = await this.database.user.findFirst({
         where: { userAccount: `${account}` },

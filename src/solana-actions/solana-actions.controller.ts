@@ -23,14 +23,22 @@ export class SolanaActionController {
   // @Header('headers', `${ACTIONS_CORS_HEADERS}`)
   async postFlightDepatureCityAction(
     @Query('depatureCity') depatureCity: string,
+    @Query('stage') stage: string,
+    @Query('sessionId') sessionId: string,
+    @Query('airportCode') airportCode: string,
+    @Query('destinationCity') destinationCity: string,
     @Body() bodyData: ActionPostRequest,
   ) {
     try {
-      console.log({ ...bodyData, depatureCity });
+      console.log({ ...bodyData, depatureCity, stage });
 
       return await this.solanaActionService.postFlightDepatureCityAction({
         ...bodyData,
         depatureCity,
+        stage,
+        sessionId,
+        airportCode,
+        destinationCity,
       });
     } catch (error) {
       console.log(error);
@@ -39,6 +47,34 @@ export class SolanaActionController {
 
   @Post('next-action')
   async postNextAction(
+    @Query('depatureCity') depatureCity: string,
+    @Query('user') user: string,
+    @Query('sessionId') sessionId: string,
+    @Body() bodyData: ActionPostRequest,
+  ) {
+    try {
+      console.log(`this is the body :`, { ...bodyData });
+      // Validate the client-provided input
+
+      //   const responsePayload =
+      return await this.solanaActionService.getFlightDestinationCityAction(
+        depatureCity!,
+        user!,
+        sessionId!,
+      );
+      //   if (responsePayload) {
+      //     res.set(ACTIONS_CORS_HEADERS);
+      //     console.log(responsePayload);
+      //     return res.json(responsePayload);
+      //   }
+      return;
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  @Post('destination')
+  async postDestinationAction(
     @Query('depatureCity') depatureCity: string,
     @Query('user') user: string,
     @Query('sessionId') sessionId: string,
