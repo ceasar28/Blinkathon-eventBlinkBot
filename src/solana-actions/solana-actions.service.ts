@@ -127,7 +127,7 @@ export class SolanaActionService {
 
       console.log(`this are codes :`, departureCityCodes);
       console.log(`this is account :`, userAccount);
-      console.log(`this are sessionId :`, sessionId);
+      console.log(`this is the sessionId :`, sessionId);
 
       const payload: ActionGetResponse = {
         type: 'action',
