@@ -1,8 +1,6 @@
-import { Body, Controller, Get, Post, Query, Req, Res } from '@nestjs/common';
-import type { Response } from 'express';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { SolanaActionService } from './solana-actions.service';
-import { ACTIONS_CORS_HEADERS, ActionPostRequest } from '@solana/actions';
-import { PublicKey } from '@solana/web3.js';
+import { ActionPostRequest } from '@solana/actions';
 
 @Controller('solana-action')
 export class SolanaActionController {
@@ -40,17 +38,22 @@ export class SolanaActionController {
   }
 
   @Post('next-action')
-  // @Header('headers', `${ACTIONS_CORS_HEADERS}`)
-  async postNextAction(@Body() bodyData: ActionPostRequest) {
+  async postNextAction(
+    @Query('depatureCity') depatureCity: string,
+    @Query('user') user: string,
+    @Query('sessionId') sessionId: string,
+    @Body() bodyData: ActionPostRequest,
+  ) {
     try {
       console.log(`this is the body :`, { ...bodyData });
       // Validate the client-provided input
 
       //   const responsePayload =
-      return await this.solanaActionService.postFlightDepatureCityAction({
-        account: '7eBmtW8CG1zJ6mEYbTpbLRtjD1BLHdQdU5Jc8Uip42eE',
-        depatureCity: 'london',
-      });
+      return await this.solanaActionService.getFlightDestinationCityAction(
+        depatureCity!,
+        user!,
+        sessionId!,
+      );
       //   if (responsePayload) {
       //     res.set(ACTIONS_CORS_HEADERS);
       //     console.log(responsePayload);

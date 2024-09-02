@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   ActionGetResponse,
   ActionPostResponse,
-  createPostResponse,
+  //createPostResponse,
 } from '@solana/actions';
 import {
   clusterApiUrl,
@@ -13,6 +13,7 @@ import {
   Transaction,
 } from '@solana/web3.js';
 import { DatabaseService } from 'src/database/database.service';
+import { FlightSearchService } from 'src/flight-search/flight-search.service';
 
 const ADMIN_WALLET = new PublicKey(process.env.ADMIN_WALLET);
 const baseURL =
@@ -22,50 +23,55 @@ const baseURL =
 
 @Injectable()
 export class SolanaActionService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    private readonly flightService: FlightSearchService,
+  ) {}
 
-  getAction = async (eventId?: string) => {
-    try {
-      console.log(baseURL);
+  //   getAction = async (eventId?: string) => {
+  //     try {
+  //       console.log(baseURL);
 
-      const eventTicket = await this.database.event.findFirst({
-        where: { id: +eventId || 6 },
-      });
+  //       const eventTicket = await this.database.event.findFirst({
+  //         where: { id: +eventId || 6 },
+  //       });
 
-      if (eventTicket) {
-        const payload: ActionGetResponse = {
-          icon: eventTicket?.media
-            ? `${baseURL}/bot/${eventTicket.media}`
-            : `https://i.ibb.co/PxqQCTQ/eventblinkbot-high-resolution-logo.jpg`,
-          title: eventTicket?.eventName,
-          description: eventTicket?.description,
-          label: `Buy Ticket  (${eventTicket?.price} SOL)`,
-          disabled: false,
-          links: {
-            actions: [
-              {
-                href: `${baseURL}/solana-action?event=${eventTicket?.id}&email={Email}&name={Name}`,
-                label: `Buy Ticket  (${eventTicket?.price ? eventTicket.price : 0} SOL)`, // button text
-                parameters: [
-                  {
-                    name: 'Name', // name template literal
-                    label: 'Enter you name', // placeholder for the input
-                  },
-                  {
-                    name: 'Email', // name template literal
-                    label: 'Enter your email address', // placeholder for the input
-                  },
-                ],
-              },
-            ],
-          },
-        };
-        return payload;
-      }
-    } catch (error) {
-      console.log(error);
-    }
-  };
+  //       if (eventTicket) {
+  //         const payload: ActionGetResponse = {
+  //           icon: eventTicket?.media
+  //             ? `${baseURL}/bot/${eventTicket.media}`
+  //             : `https://i.ibb.co/PxqQCTQ/eventblinkbot-high-resolution-logo.jpg`,
+  //           title: eventTicket?.eventName,
+  //           description: eventTicket?.description,
+  //           label: `Buy Ticket  (${eventTicket?.price} SOL)`,
+  //           disabled: false,
+  //           links: {
+  //             actions: [
+  //               {
+  //                 href: `${baseURL}/solana-action?event=${eventTicket?.id}&email={Email}&name={Name}`,
+  //                 label: `Buy Ticket  (${eventTicket?.price ? eventTicket.price : 0} SOL)`, // button text
+  //                 parameters: [
+  //                   {
+  //                     name: 'Name', // name template literal
+  //                     label: 'Enter you name', // placeholder for the input
+  //                   },
+  //                   {
+  //                     name: 'Email', // name template literal
+  //                     label: 'Enter your email address', // placeholder for the input
+  //                   },
+  //                 ],
+  //               },
+  //             ],
+  //           },
+  //         };
+  //         return payload;
+  //       }
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   };
+
+  // to get users departure city
 
   getFlightDepatureCityAction = async () => {
     try {
@@ -81,7 +87,7 @@ export class SolanaActionService {
         links: {
           actions: [
             {
-              href: `${baseURL}/solana-action?depatureCity={depatureCity}&stage='depatureCity'`,
+              href: `${baseURL}/solana-action?depatureCity={depatureCity}`,
               label: `Next`, // button text
               parameters: [
                 {
@@ -99,15 +105,35 @@ export class SolanaActionService {
     }
   };
 
-  getFlightDestinationCityAction = async () => {
+  // to get users destination city
+  getFlightDestinationCityAction = async (
+    departureCity?: string,
+    userAccount?: string,
+    sessionId?: string,
+  ) => {
     try {
       console.log(baseURL);
+      let departureCityCodes =
+        await this.flightService.searchAirport(departureCity);
+
+      if (!departureCity) {
+        departureCityCodes = [];
+      }
+
+      const formattedCityCode = departureCityCodes.map((city) => ({
+        label: `${city.name}, --> ${city.location}`,
+        value: `${city.iata}`,
+      }));
+
+      console.log(`this are codes :`, departureCityCodes);
+      console.log(`this is account :`, userAccount);
+      console.log(`this are sessionId :`, sessionId);
 
       const payload: ActionGetResponse = {
         type: 'action',
         icon: 'https://i.ibb.co/qDFWWq3/wings-high-resolution-logo.png',
         title: 'Wings',
-        description: 'Welcome to Wings, Search flights using blinks.',
+        description: 'Please fill yourr destination city.',
         label: `Destination City`,
         disabled: false,
         links: {
@@ -117,8 +143,14 @@ export class SolanaActionService {
               label: `Next`, // button text
               parameters: [
                 {
-                  name: 'depatureCity', // name template literal
-                  label: 'Depature city (e.g london)', // placeholder for the input
+                  label: 'Select your depature city Airport',
+                  name: 'cityCode',
+                  type: 'checkbox',
+                  options: [...formattedCityCode],
+                },
+                {
+                  name: 'destination city', // name template literal
+                  label: 'Destination city (e.g london)', // placeholder for the input
                 },
               ],
             },
@@ -141,7 +173,6 @@ export class SolanaActionService {
 
       const depatureCity = data.depatureCity;
       // stage is the stage of the action in the chain
-      const stage = data.stage;
 
       if (!depatureCity) {
         return;
@@ -184,6 +215,27 @@ export class SolanaActionService {
       //     });
       //   }
 
+      const userExist = await this.database.user.findFirst({
+        where: { userAccount: `${account}` },
+      });
+
+      if (!userExist) {
+        await this.database.user.create({
+          data: {
+            userAccount: `${account}`,
+          },
+        });
+      }
+
+      const saveSessionToDb = await this.database.session.create({
+        data: {
+          userAccount: `${account}`,
+          departureCity: depatureCity,
+        },
+      });
+
+      console.log(saveSessionToDb);
+
       const payload: ActionPostResponse = {
         transaction: transaction
           .serialize({
@@ -194,12 +246,10 @@ export class SolanaActionService {
         links: {
           next: {
             type: 'post',
-            href: `${baseURL}/solana-action/next-action`,
-            name: 'depatureCity', // name template literal
-            label: 'Depature city (e.g london)', // placeholder for the input
+            href: `${baseURL}/solana-action/next-action?depatureCity=${depatureCity}&user=${saveSessionToDb.userAccount}&sessionId=${saveSessionToDb.id}`,
           },
         },
-        message: `stage 2`,
+        message: `next stage`,
       };
       //   console.log('Payload:', payload);
       //   console.log('Transaction:', transaction);
