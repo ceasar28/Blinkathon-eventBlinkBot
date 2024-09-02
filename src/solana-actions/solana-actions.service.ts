@@ -109,7 +109,6 @@ export class SolanaActionService {
   getFlightDestinationCityAction = async (
     departureCity?: string,
     userAccount?: string,
-    sessionId?: string,
   ) => {
     try {
       console.log(baseURL);
@@ -120,32 +119,32 @@ export class SolanaActionService {
         departureCityCodes = [];
       }
 
+      // use a fucntion to get the code from the parenthesis
       const formattedCityCode = departureCityCodes.map((city) => ({
         label: `${city.name}, --> ${city.location}`,
-        value: `${city.iata}`,
+        value: `${city.name}, - ${city.location} (${city.iata})`,
       }));
 
       console.log(`this are codes :`, departureCityCodes);
       console.log(`this is account :`, userAccount);
-      console.log(`this is the sessionId :`, sessionId);
 
       const payload: ActionGetResponse = {
         type: 'action',
         icon: 'https://i.ibb.co/qDFWWq3/wings-high-resolution-logo.png',
         title: 'Wings',
         description:
-          'Please Select your depature city airport and then fill in  your destination city.',
+          '* Please Select your depature city airport.\n* Fill in  your destination city.',
         label: `Destination City`,
         disabled: false,
         links: {
           actions: [
             {
-              href: `${baseURL}/solana-action?depatureCity=${departureCity}&sessionId=${sessionId}&userAccount=${userAccount}&airportCode={cityCode}&destinationCity={destinationCity}&stage=2`,
+              href: `${baseURL}/solana-action?depatureCity=${departureCity}&userAccount=${userAccount}&departureCityCode={departureCityCode}&destinationCity={destinationCity}&stage=2`,
               label: `Next`, // button text
               parameters: [
                 {
                   label: 'Select your depature city Airport',
-                  name: 'cityCode',
+                  name: 'departureCityCode',
                   type: 'checkbox',
                   options: [...formattedCityCode],
                 },
@@ -164,25 +163,100 @@ export class SolanaActionService {
     }
   };
 
-  postFlightDepatureCityAction = async (data: any) => {
+  // to get users departure date
+  getFlightDepartureDateAction = async (
+    departureCity?: string,
+    userAccount?: string,
+    departureCityCode?: string,
+    destinationCity?: string,
+  ) => {
     try {
       console.log(baseURL);
+      let destinationCodes =
+        await this.flightService.searchAirport(destinationCity);
+
+      if (!departureCity) {
+        destinationCodes = [];
+      }
+
+      // use a fucntion to get the code from the parenthesis
+      const formattedCityCode = destinationCodes.map((city) => ({
+        label: `${city.name}, --> ${city.location}`,
+        value: `${city.name}, - ${city.location} (${city.iata})`,
+      }));
+
+      console.log(`this are codes :`, destinationCodes);
+      console.log(`this is account :`, userAccount);
+
+      const payload: ActionGetResponse = {
+        type: 'action',
+        icon: 'https://i.ibb.co/qDFWWq3/wings-high-resolution-logo.png',
+        title: 'Wings',
+        description: `Depature: ${departureCityCode}\n\n*Please Select your destination city airport.\n*Pick a departure date.`,
+        label: `Destination City`,
+        disabled: false,
+        links: {
+          actions: [
+            {
+              href: `${baseURL}/solana-action?depatureCity=${departureCity}&userAccount=${userAccount}&destinationCity=${destinationCity}&departureCityCode=${departureCityCode}&destinationCityCode={destinationCityCode}&departureDate={departureDate}&stage=3`,
+              label: `Next`, // button text
+              parameters: [
+                {
+                  label: 'Select your destination city Airport',
+                  name: 'destinationCityCode',
+                  type: 'checkbox',
+                  options: [...formattedCityCode],
+                },
+                {
+                  label: 'Pick depature date',
+                  name: 'departureDate', // name template literal
+                  type: 'date',
+                },
+              ],
+            },
+          ],
+        },
+      };
+      return payload;
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  postAction = async (data: any) => {
+    try {
+      console.log(baseURL);
+      console.log(data);
+      const depatureCity = data.depatureCity;
+      const account: PublicKey = new PublicKey(data.account);
+      const stage = data.stage;
+      const departureCityCode = data.departureCityCode;
+      const destinationCity = data.destinationCity;
+      const destinationCityCode = data.destinationCityCode;
+      const departureDate = data.departureDate;
+
+      // check if user exist
+      const userExist = await this.database.user.findFirst({
+        where: { userAccount: `${account}` },
+      });
+
+      if (!userExist) {
+        await this.database.user.create({
+          data: {
+            userAccount: `${account}`,
+          },
+        });
+      }
 
       const connection = new Connection(
         process.env.SOLANA_RPC! || clusterApiUrl('devnet'),
       );
 
-      const depatureCity = data.depatureCity;
-      // stage is the stage of the action in the chain
-
-      if (!depatureCity) {
-        return;
-      }
       // // Ensure the receiving account will be rent exempt
       // const minimumBalance = await connection.getMinimumBalanceForRentExemption(
       //   0, // Note: simple accounts that just store native SOL have `0` bytes of data
       // );
-      const account: PublicKey = new PublicKey(data.account);
+
       const transaction = new Transaction();
 
       // Transfer 10% of the funds to the default SOL address
@@ -200,31 +274,6 @@ export class SolanaActionService {
         await connection.getLatestBlockhash()
       ).blockhash;
 
-      if (data.stage === '2') {
-        console.log(`stage 2 data :`, data);
-      }
-
-      const userExist = await this.database.user.findFirst({
-        where: { userAccount: `${account}` },
-      });
-
-      if (!userExist) {
-        await this.database.user.create({
-          data: {
-            userAccount: `${account}`,
-          },
-        });
-      }
-
-      const saveSessionToDb = await this.database.session.create({
-        data: {
-          userAccount: `${account}`,
-          departureCity: depatureCity,
-        },
-      });
-
-      console.log(saveSessionToDb);
-
       const payload: ActionPostResponse = {
         transaction: transaction
           .serialize({
@@ -235,7 +284,7 @@ export class SolanaActionService {
         links: {
           next: {
             type: 'post',
-            href: `${baseURL}/solana-action/next-action?depatureCity=${depatureCity}&user=${saveSessionToDb.userAccount}&sessionId=${saveSessionToDb.id}`,
+            href: `${baseURL}/solana-action/next-action?depatureCity=${depatureCity}&user=${account}}&stage=${stage}&departureCityCode=${departureCityCode}&destinationCity=${destinationCity}&destinationCityCode=${destinationCityCode}$departureDate=${departureDate}`,
           },
         },
         message: `next stage`,

@@ -24,21 +24,24 @@ export class SolanaActionController {
   async postFlightDepatureCityAction(
     @Query('depatureCity') depatureCity: string,
     @Query('stage') stage: string,
-    @Query('sessionId') sessionId: string,
-    @Query('airportCode') airportCode: string,
+    @Query('departureCityCode') departureCityCode: string,
     @Query('destinationCity') destinationCity: string,
-    @Body() bodyData: ActionPostRequest,
+    @Query('destinationCityCode') destinationCityCode: string,
+    @Query('departureDate') departureDate: string,
+    @Body()
+    bodyData: ActionPostRequest,
   ) {
     try {
       console.log({ ...bodyData, depatureCity, stage });
 
-      return await this.solanaActionService.postFlightDepatureCityAction({
+      return await this.solanaActionService.postAction({
         ...bodyData,
         depatureCity,
         stage,
-        sessionId,
-        airportCode,
+        departureCityCode,
         destinationCity,
+        destinationCityCode,
+        departureDate,
       });
     } catch (error) {
       console.log(error);
@@ -49,7 +52,11 @@ export class SolanaActionController {
   async postNextAction(
     @Query('depatureCity') depatureCity: string,
     @Query('user') user: string,
-    @Query('sessionId') sessionId: string,
+    @Query('stage') stage: string,
+    @Query('departureCityCode') departureCityCode: string,
+    @Query('destinationCity') destinationCity: string,
+    @Query('destinationCityCode') destinationCityCode: string,
+    @Query('departureDate') departureDate: string,
     @Body() bodyData: ActionPostRequest,
   ) {
     try {
@@ -57,11 +64,20 @@ export class SolanaActionController {
       // Validate the client-provided input
 
       //   const responsePayload =
-      return await this.solanaActionService.getFlightDestinationCityAction(
-        depatureCity!,
-        user!,
-        sessionId!,
-      );
+      if (stage === '1') {
+        return await this.solanaActionService.getFlightDestinationCityAction(
+          depatureCity!,
+          user!,
+        );
+      } else if (stage === '2') {
+        return await this.solanaActionService.getFlightDepartureDateAction(
+          depatureCity!,
+          user!,
+          departureCityCode!,
+          destinationCity!,
+        );
+      }
+
       //   if (responsePayload) {
       //     res.set(ACTIONS_CORS_HEADERS);
       //     console.log(responsePayload);
@@ -73,31 +89,30 @@ export class SolanaActionController {
     }
   }
 
-  @Post('destination')
-  async postDestinationAction(
-    @Query('depatureCity') depatureCity: string,
-    @Query('user') user: string,
-    @Query('sessionId') sessionId: string,
-    @Body() bodyData: ActionPostRequest,
-  ) {
-    try {
-      console.log(`this is the body :`, { ...bodyData });
-      // Validate the client-provided input
+  //   @Post('destination')
+  //   async postDestinationAction(
+  //     @Query('depatureCity') depatureCity: string,
+  //     @Query('user') user: string,
+  //     @Query('sessionId') sessionId: string,
+  //     @Body() bodyData: ActionPostRequest,
+  //   ) {
+  //     try {
+  //       console.log(`this is the body :`, { ...bodyData });
+  //       // Validate the client-provided input
 
-      //   const responsePayload =
-      return await this.solanaActionService.getFlightDestinationCityAction(
-        depatureCity!,
-        user!,
-        sessionId!,
-      );
-      //   if (responsePayload) {
-      //     res.set(ACTIONS_CORS_HEADERS);
-      //     console.log(responsePayload);
-      //     return res.json(responsePayload);
-      //   }
-      return;
-    } catch (error) {
-      console.log(error);
-    }
-  }
+  //       //   const responsePayload =
+  //       return await this.solanaActionService.getFlightDestinationCityAction(
+  //         depatureCity!,
+  //         user!,
+  //       );
+  //       //   if (responsePayload) {
+  //       //     res.set(ACTIONS_CORS_HEADERS);
+  //       //     console.log(responsePayload);
+  //       //     return res.json(responsePayload);
+  //       //   }
+  //       return;
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   }
 }
