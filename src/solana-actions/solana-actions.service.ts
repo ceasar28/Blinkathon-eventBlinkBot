@@ -510,13 +510,8 @@ export class SolanaActionService {
               verifySignatures: true,
             })
             .toString('base64'),
-          links: {
-            next: {
-              type: 'post',
-              href: `${baseURL}/solana-action/next-action?depatureCity=${depatureCity}&user=${account}}&stage=${stage}&departureCityCode=${departureCityCode}&destinationCity=${destinationCity}&destinationCityCode=${destinationCityCode}&departureDate=${departureDate}&token=${token}&selectedFlight=${selectedFlight}&firstName=${firstName}&lastName=${lastName}&email=${email}`,
-            },
-          },
-          message: `next stage`,
+
+          message: `Payment Successful, this is just a demo booking`,
         };
         //   console.log('Payload:', payload);
         //   console.log('Transaction:', transaction);
