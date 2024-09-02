@@ -46,14 +46,21 @@ export class FlightSearchService {
   // search available flights (bot mulitcity, oneway, and return)
 
   searchAvailableOneWayFlight = async (query: any) => {
-    function convertDateFormat(dateString) {
-      // Split the input date string into day, month, and year
-      const [day, month, year] = dateString.split('/');
-
-      // Return the date in the format yyyy-mm-dd
-      return `${year}-${month}-${day}`;
+    function extractContentInsideParentheses(text) {
+      // Regular expression to match content inside parentheses
+      const match = text.match(/\(([^)]+)\)/);
+      // If a match is found, return the first capture group
+      return match ? match[1] : null;
     }
     try {
+      const departureCityCode = extractContentInsideParentheses(
+        query.departureCityCode,
+      );
+      const destinationCityCode = extractContentInsideParentheses(
+        query.destinationCityCode,
+      );
+
+      console.log(departureCityCode, destinationCityCode, query.departureDate);
       const availableFlights = await this.httpService.axiosRef.get(
         process.env.ONEWAY_URL,
         {
@@ -63,9 +70,9 @@ export class FlightSearchService {
             'X-RapidAPI-Host': process.env.RapidAPI_HOST,
           },
           params: {
-            fromEntityId: query.from,
-            toEntityId: query.to,
-            departDate: convertDateFormat(query.date_from),
+            fromEntityId: departureCityCode,
+            toEntityId: destinationCityCode,
+            departDate: query.departureDate,
           },
         },
       );

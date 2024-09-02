@@ -21,13 +21,20 @@ export class SolanaActionController {
 
   @Post()
   // @Header('headers', `${ACTIONS_CORS_HEADERS}`)
-  async postFlightDepatureCityAction(
+  async postAction(
     @Query('depatureCity') depatureCity: string,
     @Query('stage') stage: string,
     @Query('departureCityCode') departureCityCode: string,
     @Query('destinationCity') destinationCity: string,
     @Query('destinationCityCode') destinationCityCode: string,
     @Query('departureDate') departureDate: string,
+    @Query('token') token: string,
+    @Query('selectedFlight') selectedFlight: string,
+    @Query('firstName') firstName: string,
+    @Query('lastName') lastName: string,
+    @Query('email') email: string,
+    @Query('id') id: string,
+    @Query('price') price: string,
     @Body()
     bodyData: ActionPostRequest,
   ) {
@@ -42,6 +49,13 @@ export class SolanaActionController {
         destinationCity,
         destinationCityCode,
         departureDate,
+        token,
+        selectedFlight,
+        firstName,
+        lastName,
+        email,
+        id,
+        price,
       });
     } catch (error) {
       console.log(error);
@@ -57,6 +71,8 @@ export class SolanaActionController {
     @Query('destinationCity') destinationCity: string,
     @Query('destinationCityCode') destinationCityCode: string,
     @Query('departureDate') departureDate: string,
+    @Query('token') token: string,
+    @Query('selectedFlight') selectedFlight: string,
     @Body() bodyData: ActionPostRequest,
   ) {
     try {
@@ -75,6 +91,26 @@ export class SolanaActionController {
           user!,
           departureCityCode!,
           destinationCity!,
+        );
+      } else if (stage === '3') {
+        return await this.solanaActionService.getFlightsAction(
+          depatureCity!,
+          user!,
+          departureCityCode!,
+          destinationCity!,
+          destinationCityCode!,
+          departureDate!,
+        );
+      } else if (stage === '4') {
+        return await this.solanaActionService.getUserDetailsAction(
+          depatureCity!,
+          user!,
+          departureCityCode!,
+          destinationCity!,
+          destinationCityCode!,
+          departureDate!,
+          token!,
+          selectedFlight!,
         );
       }
 
