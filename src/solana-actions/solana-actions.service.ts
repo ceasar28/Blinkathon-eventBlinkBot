@@ -393,13 +393,13 @@ export class SolanaActionService {
     }
 
     // // Example usage
-    // const text =
-    //   '(11348-2409091445--30686-0-13681-2409091545)(103)Enugu, Nigeria(ENU) - Lagos, Nigeria(LOS🔄 Stops: 0🕛 Depature: Mon, Sep 9 - 1:45pm🕛 Arrival: Mon, Sep 9 - 2:45pm 🛫 United Nigeria Airlines💰 Price: $103';
+    const text =
+      '(11348-2409091445--30686-0-13681-2409091545)(103)Enugu, Nigeria(ENU) - Lagos, Nigeria(LOS🔄 Stops: 0🕛 Depature: Mon, Sep 9 - 1:45pm🕛 Arrival: Mon, Sep 9 - 2:45pm 🛫 United Nigeria Airlines💰 Price: $103';
 
-    // const result = extractAndRemoveIdAndPrice(text);
-    // console.log('ID:', result.id);
-    // console.log('Price:', result.price);
-    // console.log('Remaining Text:', result.remainingText);
+    const result = extractAndRemoveIdAndPrice(text);
+    console.log('ID:', result.id);
+    console.log('Price:', result.price);
+    console.log('Remaining Text:', result.remainingText);
 
     try {
       const saperated = extractAndRemoveIdAndPrice(selectedFlight);
@@ -461,6 +461,7 @@ export class SolanaActionService {
       const firstName = data.firstName;
       const lastName = data.lastName;
       const email = data.email;
+      const price = data.price;
 
       // check if user exist
       const userExist = await this.database.user.findFirst({
@@ -485,18 +486,53 @@ export class SolanaActionService {
       // );
       if (stage === '5') {
         console.log('ENDDDDDDDD');
+        const transaction = new Transaction();
+
+        // Transfer 10% of the funds to the default SOL address
+        transaction.add(
+          SystemProgram.transfer({
+            fromPubkey: account,
+            toPubkey: ADMIN_WALLET,
+            lamports: LAMPORTS_PER_SOL * price,
+          }),
+        );
+
+        // Set the end user as the fee payer
+        transaction.feePayer = account;
+        transaction.recentBlockhash = (
+          await connection.getLatestBlockhash()
+        ).blockhash;
+
+        const payload: ActionPostResponse = {
+          transaction: transaction
+            .serialize({
+              requireAllSignatures: false,
+              verifySignatures: true,
+            })
+            .toString('base64'),
+          links: {
+            next: {
+              type: 'post',
+              href: `${baseURL}/solana-action/next-action?depatureCity=${depatureCity}&user=${account}}&stage=${stage}&departureCityCode=${departureCityCode}&destinationCity=${destinationCity}&destinationCityCode=${destinationCityCode}&departureDate=${departureDate}&token=${token}&selectedFlight=${selectedFlight}&firstName=${firstName}&lastName=${lastName}&email=${email}`,
+            },
+          },
+          message: `next stage`,
+        };
+        //   console.log('Payload:', payload);
+        //   console.log('Transaction:', transaction);
+        return payload;
       }
 
       const transaction = new Transaction();
 
       // Transfer 10% of the funds to the default SOL address
-      transaction.add(
-        SystemProgram.transfer({
-          fromPubkey: account,
-          toPubkey: ADMIN_WALLET,
-          lamports: LAMPORTS_PER_SOL * 0,
-        }),
-      );
+      //   transaction.add(
+      //     SystemProgram.transfer({
+      //       fromPubkey: account,
+      //       toPubkey: ADMIN_WALLET,
+      //       lamports: 0,
+      //     }),
+      //   );
 
       // Set the end user as the fee payer
       transaction.feePayer = account;

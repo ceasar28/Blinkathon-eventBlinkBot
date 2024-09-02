@@ -73,6 +73,7 @@ export class SolanaActionController {
     @Query('departureDate') departureDate: string,
     @Query('token') token: string,
     @Query('selectedFlight') selectedFlight: string,
+    @Query('price') price: string,
     @Body() bodyData: ActionPostRequest,
   ) {
     try {
