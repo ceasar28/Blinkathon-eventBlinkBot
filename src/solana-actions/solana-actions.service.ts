@@ -18,7 +18,7 @@ import { FlightSearchService } from 'src/flight-search/flight-search.service';
 const ADMIN_WALLET = new PublicKey(process.env.ADMIN_WALLET);
 const baseURL =
   process.env.NODE_ENV === 'production'
-    ? 'https://eventblink.xyz'
+    ? process.env.Base_Url
     : 'http://localhost:3001';
 
 @Injectable()
